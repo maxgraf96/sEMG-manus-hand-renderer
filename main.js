@@ -78,15 +78,6 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	let jointData = await read_csv_file("./resources/csvs/Untitled_2023-12-08_15-08-13_max_R001.csv");
 	console.log(jointData);
 
-	// Values are like in the comment above.
-	// Now match the values to the bones
-	// We have the bones in the bones object
-	// We have the values in the jointData object
-	// So we can do:
-	// bones['finger_index01R'].rotation.x = jointData['Index_MCP_X'];
-	// bones['finger_index01R'].rotation.y = jointData['Index_MCP_Y'];
-	// bones['finger_index01R'].rotation.z = jointData['Index_MCP_Z'];
-
 	// Map from bone name to joint data name
 	let boneToJoint = {
 		'finger_index01R': 'Index_MCP',
@@ -124,17 +115,17 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
     const tracks = [];
 	for (let boneName in boneToJoint) {
 		let jointName = boneToJoint[boneName];
-		for (let axis of ['X', 'Y', 'Z']) {
+		// for (let axis of ['X', 'Y', 'Z']) {
+		for (let axis of ['X']) {
 			let trackName = boneName + '.rotation[' + axis.toLowerCase() + ']';
 			let values = [];
 			for (let i = 0; i < numFrames; i++) {
 				if(boneName.includes('thumb') && axis === 'Z'){
 					values.push(radians(0));
-					// values.push(-radians(jointData[i][jointName + '_' + axis]));
-
 				}
 				else{
-					values.push(radians(jointData[i][jointName + '_' + axis]));
+					let value = jointData[i][jointName + '_' + axis];
+					values.push(radians(value));
 				}
 			}
 			let track = new THREE.KeyframeTrack(trackName, times, values);
@@ -151,12 +142,20 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
     // Update the mixer in your render loop
     const clock = new THREE.Clock();
+	let i = 0;
     function animate() {
         requestAnimationFrame(animate);
         mixer.update(clock.getDelta());
 		// required if controls.enableDamping or controls.autoRotate are set to true
 		controls.update();
         renderer.render(scene, camera);
+
+		// Print current index tip rotation values
+		let jointName = boneToJoint["finger_index03R"];
+		let joint = jointData[i][jointName + '_' + "X"]
+		// console.log("Index tip rotation: " + joint);
+
+		i = (i + 1) % numFrames;
     }
 
 	let r = "./resources/skybox/";
@@ -172,7 +171,7 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
 	scene.background = new THREE.CubeTextureLoader().load(urls);
 
-    animate();
+    animate(jointData);
 });
 
 
