@@ -92,22 +92,18 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 		'finger_index01R': 'Index_MCP',
 		'finger_index02R': 'Index_PIP',
 		'finger_index03R': 'Index_DIP',
-		'finger_index04R': 'Index_TIP',
 		'finger_middle01R': 'Middle_MCP',
 		'finger_middle02R': 'Middle_PIP',
 		'finger_middle03R': 'Middle_DIP',
-		'finger_middle04R': 'Middle_TIP',
 		'finger_ring01R': 'Ring_MCP',
 		'finger_ring02R': 'Ring_PIP',
 		'finger_ring03R': 'Ring_DIP',
-		'finger_ring04R': 'Ring_TIP',
 		'finger_pinky01R': 'Pinky_MCP',
 		'finger_pinky02R': 'Pinky_PIP',
 		'finger_pinky03R': 'Pinky_DIP',
-		'finger_pinky04R': 'Pinky_TIP',
-		'thumb_01R': 'Thumb_MCP',
-		'thumb_02R': 'Thumb_DIP',
-		'thumb_03R': 'Thumb_TIP',
+		'thumb01R': 'Thumb_MCP',
+		'thumb02R': 'Thumb_DIP',
+		'thumb03R': 'Thumb_TIP',
 	};
 
 
@@ -132,7 +128,14 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 			let trackName = boneName + '.rotation[' + axis.toLowerCase() + ']';
 			let values = [];
 			for (let i = 0; i < numFrames; i++) {
-				values.push(radians(jointData[i][jointName + '_' + axis]));
+				if(boneName.includes('thumb') && axis === 'Z'){
+					values.push(radians(0));
+					// values.push(-radians(jointData[i][jointName + '_' + axis]));
+
+				}
+				else{
+					values.push(radians(jointData[i][jointName + '_' + axis]));
+				}
 			}
 			let track = new THREE.KeyframeTrack(trackName, times, values);
 			tracks.push(track);
