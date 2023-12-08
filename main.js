@@ -30,19 +30,23 @@ loader.load('./resources/Rigged Hand.fbx', (object) => {
 	camera.position.z = 5;
 	camera.lookAt( object.position);
 
+	const texture = new THREE.TextureLoader().load( "resources/textures/HAND_C.jpg" );
+
 	object.traverse(function (child) {
 		object.scale.set(10, 10, 10);
 		object.position.set(-7.5, -14.5, -1.5);
 		// child.scale.set(1, 1, 1);
 		if(child instanceof THREE.SkinnedMesh){
 			child.material = new THREE.MeshStandardMaterial();
-			child.material.emissive.set(1, 1, 1);
+			// child.material.emissive.set(0.1, 0.1, 0.1);
+			child.material.map = texture;
 		}
 	});
 
 	// Remove any point lights from the scene
-	object.remove(scene.getObjectByName('Hemi'));
-	object.remove(scene.getObjectByName('Point'));
+	// object.remove(scene.getObjectByName('Hemi'));
+	scene.getObjectByName('Hemi').intensity = 2.5;
+	scene.getObjectByName('Point').intensity = 10.5;
 
 	object.traverse(function (child) {
 		if (!(child instanceof THREE.Bone)) {
