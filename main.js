@@ -130,6 +130,9 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 			}
 			let track = new THREE.KeyframeTrack(trackName, times, values);
 			tracks.push(track);
+
+			// Add 1+2
+
 		}
 	}
 
@@ -161,12 +164,12 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	let r = "./resources/skybox/";
 
     let urls = [
-        r + "right.png",
-        r + "left.png",
-        r + "top.png",
-        r + "bottom.png",
-        r + "front.png",
-        r + "back.png"
+        r + "px.png", //r + "right.png",
+        r + "nx.png", //r + "left.png",
+        r + "py.png", //r + "top.png",
+        r + "ny.png", //r + "bottom.png",
+        r + "pz.png", //r + "front.png",
+        r + "nz.png" //r + "back.png"
     ];
 
 	scene.background = new THREE.CubeTextureLoader().load(urls);
