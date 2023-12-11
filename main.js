@@ -92,8 +92,8 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 		'finger_pinky01R': 'Pinky_MCP',
 		'finger_pinky02R': 'Pinky_PIP',
 		'finger_pinky03R': 'Pinky_DIP',
-		'thumb01R': 'Thumb_MCP',
-		'thumb02R': 'Thumb_DIP',
+		'thumb01R': 'Thumb_CMC',
+		'thumb02R': 'Thumb_MCP',
 		'thumb03R': 'Thumb_TIP',
 	};
 
@@ -115,23 +115,51 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
     const tracks = [];
 	for (let boneName in boneToJoint) {
 		let jointName = boneToJoint[boneName];
-		// for (let axis of ['X', 'Y', 'Z']) {
-		for (let axis of ['X']) {
+		for (let axis of ['X', 'Y', 'Z']) {
+		// for (let axis of ['X']) {
+
 			let trackName = boneName + '.rotation[' + axis.toLowerCase() + ']';
 			let values = [];
 			for (let i = 0; i < numFrames; i++) {
-				if(boneName.includes('thumb') && axis === 'Z'){
-					values.push(radians(0));
+				let value = parseFloat(jointData[i][jointName + '_' + axis]);
+
+				if(boneName.includes('thumb01') && axis === 'X'){
+					value = 160 - value;
+					values.push(radians(value));
 				}
-				else{
-					let value = jointData[i][jointName + '_' + axis];
+				else if(boneName.includes('thumb') && axis === 'X'){
+					values.push(radians(value));
+				}
+
+				if(boneName.includes('thumb') && axis === 'Y'){
+					values.push(radians(value));
+				}
+
+				if(boneName.includes('thumb01') && axis === 'Z'){
+					value = value - 90;
+					values.push(radians(value));
+				}
+				if(boneName.includes('thumb02') && axis === 'Z'){
+					value = value + 90;
+					values.push(radians(value));
+				}
+				if(boneName.includes('thumb03') && axis === 'Z'){
+					value = value + 90;
+					values.push(radians(value));
+				}
+
+				if(!boneName.includes('thumb')){
+					if(value < 0)
+						value = -value;
+
+					// Only for visualizing - the 3D model clips with values > 100
+					value = Math.min(value, 120);
+
 					values.push(radians(value));
 				}
 			}
 			let track = new THREE.KeyframeTrack(trackName, times, values);
 			tracks.push(track);
-
-			// Add 1+2
 
 		}
 	}
@@ -154,9 +182,14 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
         renderer.render(scene, camera);
 
 		// Print current index tip rotation values
-		let jointName = boneToJoint["finger_index03R"];
-		let joint = jointData[i][jointName + '_' + "X"]
-		// console.log("Index tip rotation: " + joint);
+		// let jointName = boneToJoint["thumb01R"];
+		let jointName2 = boneToJoint["thumb02R"];
+		// let jointName3 = boneToJoint["thumb03R"];
+		// let joint = jointData[i][jointName + '_' + "X"];
+		let joint2 = jointData[i][jointName2 + '_' + "Z"];
+		// let joint3 = jointData[i][jointName3 + '_' + "X"];
+		// console.log("Thumb rotation: " + joint2);
+		// console.log("Thumb rotation: " + joint, joint2, joint3);
 
 		i = (i + 1) % numFrames;
     }
