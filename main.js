@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader.js';
+
 import {read_csv_file} from "./csv_reader";
 
 const scene = new THREE.Scene();
@@ -10,7 +11,6 @@ const loader = new FBXLoader();
 let radians = function(degrees) {
 	return degrees * Math.PI / 180;
 };
-
 
 // Load the FBX model and set up the scene
 loader.load('./resources/Rigged Hand.fbx', async (object) => {
@@ -74,8 +74,8 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	});
 	console.log(bones);
 
-	// Load the joint data
-	let jointData = await read_csv_file("./resources/csvs/Untitled_2023-12-08_15-08-13_max_R001.csv");
+	// Load the temp CSV file
+	let jointData = await read_csv_file("./resources/csvs/temp.csv");
 	console.log(jointData);
 
 	// Map from bone name to joint data name
@@ -102,11 +102,13 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
     // For each bone, create a keyframe track for rotation
     // This is an example for one bone
-	const FPS = 60;
+	const FPS = 50;
 	// times should be in seconds
     const times = [];
 	// look at how many frames we have
 	const numFrames = jointData.length;
+	console.log("Number of frames: " + numFrames);
+	const totalDuration = numFrames / FPS; // Total duration of the animation in seconds
 	for (let i = 0; i < numFrames; i++) {
 		times.push(i / FPS);
 	}
@@ -116,7 +118,6 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	for (let boneName in boneToJoint) {
 		let jointName = boneToJoint[boneName];
 		for (let axis of ['X', 'Y', 'Z']) {
-		// for (let axis of ['X']) {
 
 			let trackName = boneName + '.rotation[' + axis.toLowerCase() + ']';
 			let values = [];
@@ -153,7 +154,7 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 						value = -value;
 
 					// Only for visualizing - the 3D model clips with values > 100
-					value = Math.min(value, 120);
+					value = Math.min(value, 100);
 
 					values.push(radians(value));
 				}
@@ -165,33 +166,49 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	}
 
     // Create an AnimationClip
-    const clip = new THREE.AnimationClip('HandAnimation', -1, tracks);
+    const clip = new THREE.AnimationClip('HandAnimation', totalDuration, tracks);
+	console.log("Creating animation clip with total duration: " + totalDuration + " seconds.");
     // Play the Animation
     const action = mixer.clipAction(clip);
-	action.timeScale = 0.8;
+	action.timeScale = 1.0;
     action.play();
 
     // Update the mixer in your render loop
     const clock = new THREE.Clock();
 	let i = 0;
+	let delta = 0;
+	// This has to be JS's 60 FPS, not the animation's 50 FPS
+	let interval = 1 / 60;
+	let clockDelta = 0;
+
+	let cumulDelta = 0;
+	let timerclock;
+
     function animate() {
-        requestAnimationFrame(animate);
-        mixer.update(clock.getDelta());
-		// required if controls.enableDamping or controls.autoRotate are set to true
+		clockDelta = clock.getDelta();
+		cumulDelta += clockDelta;
+
+		mixer.update(clockDelta);
+
+		if(cumulDelta > interval){
+			i = (i + 1) % numFrames;
+			cumulDelta = 0;
+			// console.log("Frame: " + i);
+
+		}
 		controls.update();
-        renderer.render(scene, camera);
+		renderer.render(scene, camera);
 
-		// Print current index tip rotation values
-		// let jointName = boneToJoint["thumb01R"];
-		let jointName2 = boneToJoint["thumb02R"];
-		// let jointName3 = boneToJoint["thumb03R"];
-		// let joint = jointData[i][jointName + '_' + "X"];
-		let joint2 = jointData[i][jointName2 + '_' + "Z"];
-		// let joint3 = jointData[i][jointName3 + '_' + "X"];
-		// console.log("Thumb rotation: " + joint2);
-		// console.log("Thumb rotation: " + joint, joint2, joint3);
 
-		i = (i + 1) % numFrames;
+		if(i === numFrames - 1){
+			i = 0;
+
+			timerclock.stop();
+			console.log("Animation finished. Total time: " + timerclock.elapsedTime + " seconds.)");
+			timerclock.start();
+		}
+
+        requestAnimationFrame(animate);
     }
 
 	let r = "./resources/skybox/";
@@ -207,6 +224,8 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
 	scene.background = new THREE.CubeTextureLoader().load(urls);
 
+	timerclock = new THREE.Clock();
+	timerclock.start();
     animate(jointData);
 });
 
