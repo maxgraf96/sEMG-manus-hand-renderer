@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader.js';
+import { io } from "socket.io-client";
 
 import {read_csv_file} from "./csv_reader";
 
 const scene = new THREE.Scene();
 const loader = new FBXLoader();
+
+let MODE = "animation";
 
 // Degrees to radians function
 let radians = function(degrees) {
@@ -161,7 +164,6 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 			}
 			let track = new THREE.KeyframeTrack(trackName, times, values);
 			tracks.push(track);
-
 		}
 	}
 
@@ -185,6 +187,13 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	let timerclock;
 
     function animate() {
+		if(MODE === "live"){
+			action.stop();
+
+			renderer.render(scene, camera);
+        	requestAnimationFrame(animate);
+			return;
+		}
 		clockDelta = clock.getDelta();
 		cumulDelta += clockDelta;
 
@@ -227,6 +236,60 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 	timerclock = new THREE.Clock();
 	timerclock.start();
     animate(jointData);
+
+	// Connect to the Socket.IO server
+	const socket = io('http://localhost:5173'); // Adjust the URL/port as necessary
+
+	// Listen for 'joint_angles' events from the server
+	socket.on('joint_angles', (data) => {
+		MODE = "live"
+		// console.log('Received joint_angles:', data);
+
+		// Update the bone rotations - we get index mcp and pip, middle mcp and pip, ring mcp and pip, pinky mcp and pip -> 8 values
+		let bone_name;
+		for(let i = 0; i < 8; i++){
+			switch (i) {
+				case 0:
+					bone_name = 'finger_index01R';
+					break;
+				case 1:
+					bone_name = 'finger_index02R';
+					break;
+				case 2:
+					bone_name = 'finger_middle01R';
+					break;
+				case 3:
+					bone_name = 'finger_middle02R';
+					break;
+				case 4:
+					bone_name = 'finger_ring01R';
+					break;
+				case 5:
+					bone_name = 'finger_ring02R';
+					break;
+				case 6:
+					bone_name = 'finger_pinky01R';
+					break;
+				case 7:
+					bone_name = 'finger_pinky02R';
+					break;
+			}
+			for (let axis of ['X']) {
+				let value = parseFloat(data[i]);
+				if(value < 0)
+					value = -value;
+
+				// Only for visualizing - the 3D model clips with values > 100
+				value = Math.min(value, 100);
+
+				bones[bone_name].rotation[axis.toLowerCase()] = radians(value);
+				bones[bone_name].rotation['y'] = radians(0);
+				bones[bone_name].rotation['z'] = radians(0);
+			}
+		}
+	});
 });
+
+
 
 
