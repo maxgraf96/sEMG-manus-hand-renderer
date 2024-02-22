@@ -105,7 +105,7 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
     // For each bone, create a keyframe track for rotation
     // This is an example for one bone
-	const FPS = 50;
+	const FPS = 200;
 	// times should be in seconds
     const times = [];
 	// look at how many frames we have
@@ -247,32 +247,47 @@ loader.load('./resources/Rigged Hand.fbx', async (object) => {
 
 		// Update the bone rotations - we get index mcp and pip, middle mcp and pip, ring mcp and pip, pinky mcp and pip -> 8 values
 		let bone_name;
-		for(let i = 0; i < 8; i++){
+		for(let i = 0; i < 16; i++){
 			switch (i) {
-				case 0:
+				case 1:
 					bone_name = 'finger_index01R';
 					break;
-				case 1:
+				case 2:
 					bone_name = 'finger_index02R';
 					break;
-				case 2:
-					bone_name = 'finger_middle01R';
-					break;
 				case 3:
-					bone_name = 'finger_middle02R';
-					break;
-				case 4:
-					bone_name = 'finger_ring01R';
+					bone_name = 'finger_index03R';
 					break;
 				case 5:
-					bone_name = 'finger_ring02R';
+					bone_name = 'finger_middle01R';
 					break;
 				case 6:
-					bone_name = 'finger_pinky01R';
+					bone_name = 'finger_middle02R';
 					break;
 				case 7:
+					bone_name = 'finger_middle03R';
+					break;
+				case 9:
+					bone_name = 'finger_ring01R';
+					break;
+				case 10:
+					bone_name = 'finger_ring02R';
+					break;
+				case 11:
+					bone_name = 'finger_ring03R';
+					break;
+				case 13:
+					bone_name = 'finger_pinky01R';
+					break;
+				case 14:
 					bone_name = 'finger_pinky02R';
 					break;
+				case 15:
+					bone_name = 'finger_pinky03R';
+					break;
+			}
+			if (i === 0 || i === 4 || i === 8 || i === 12) {
+				continue;
 			}
 			for (let axis of ['X']) {
 				let value = parseFloat(data[i]);
